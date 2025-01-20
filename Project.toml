@@ -4,6 +4,7 @@ authors = ["XingyuZhang2018 <864129714@qq.com> and contributors"]
 version = "1.0.0-DEV"
 
 [deps]
+BitBasis = "50ba71b6-fa0f-514d-ae9a-0916efc90dcf"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
@@ -20,6 +21,7 @@ TeneT = "260a78e0-cbf2-49ba-8157-48058c700f32"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
+BitBasis = "0.9.6"
 ChainRulesCore = "1.25.1"
 HDF5 = "0.17.2"
 OMEinsum = "=0.7.6"

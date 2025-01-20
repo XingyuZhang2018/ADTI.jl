@@ -1,4 +1,5 @@
 module ADIT
+using BitBasis
 using ChainRulesCore
 using FileIO
 using KrylovKit

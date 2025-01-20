@@ -30,7 +30,7 @@ params = iPEPSOptimize{system, lattice}(boundary_alg=boundary_alg,
                                         ifcheckpoint=true, 
                                         ifflatten=true,
                                         verbosity=4, 
-                                        maxiter=0,
+                                        maxiter=1000,
                                         tol=1e-10,
                                         folder=folder
 )

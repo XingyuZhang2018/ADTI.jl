@@ -1,3 +1,18 @@
+function T_parity_conserving(T::AbstractArray)
+	s = size(T)
+	p = zeros(s)
+	bit = ceil(Int, log2(s[3]))
+	for index in CartesianIndices(T)
+		i = index.I .- 1
+		sum((sum(bitarray(i[3],bit)), sum(i[[1,2,4,5]]))) % 2 == 0 && (p[index] = 1)
+	end
+	p = _arraytype(T)(p)
+
+	return reshape(p.*T,s...)
+end
+
+ChainRulesCore.rrule(::typeof(T_parity_conserving),T::AbstractArray) = T_parity_conserving(T), dT -> (NoTangent(), T_parity_conserving(dT))
+
 function indextoqn(i::Int)
     i -= 1
     i == 0 && return 0
@@ -39,7 +54,7 @@ end
 function bulid_A(A, ::iPEPSOptimize{:fermion, :square})
     D, Ni, Nj = size(A)[[1,6,7]]
     SDD = _arraytype(A)(swapgate(D, D))
-    return [A[:,:,:,:,:,i,j] for i in 1:Ni, j in 1:Nj], [fdag(A[:,:,:,:,:,i,j], SDD) for i in 1:Ni, j in 1:Nj]
+    return [T_parity_conserving(A[:,:,:,:,:,i,j]) for i in 1:Ni, j in 1:Nj], [fdag(T_parity_conserving(A[:,:,:,:,:,i,j]), SDD) for i in 1:Ni, j in 1:Nj]
 end
 
 function bulid_M(A, params::iPEPSOptimize{:fermion, :square})

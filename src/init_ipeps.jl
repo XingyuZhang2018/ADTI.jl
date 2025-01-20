@@ -90,19 +90,20 @@ function init_ipeps_h5(;atype = Array, params, model, ϵ=0, ifWp=false, ifreal=f
 end
 
 function restriction_ipeps(A)
-    # Ar = Zygote.Buffer(A)
-    # Ni, Nj = size(A)[[6,7]]
-    # for j in 1:Nj, i in 1:Ni
-    #     if (i,j) in [(1,1),(1,2),(2,1)]
-    #         Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,i,j]
-    #     end
-    # end
+    Ar = Zygote.Buffer(A)
+    Ni, Nj = size(A)[[6,7]]
+    for j in 1:Nj, i in 1:Ni
+        # if (i,j) in [(1,1),(1,2),(2,1)]
+        #     Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,i,j]
+        # end
+        Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,i,j] + permutedims(A[:,:,:,:,:,i,j], (2,1,3,5,4))
+    end
     # Ar[:,:,:,:,:,2,2] = A[:,:,:,:,:,1,1]
     # Ar[:,:,:,:,:,2,3] = A[:,:,:,:,:,1,2]
     # Ar[:,:,:,:,:,1,3] = A[:,:,:,:,:,2,1]
-    # Ar = copy(Ar)
-    # return Ar/norm(Ar)
-    return A/norm(A)
+    Ar = copy(Ar)
+    return Ar/norm(Ar)
+    # return A/norm(A)
 end
 
 function init_ipeps_form_small_spin(;atype = Array, file, D::Int, d::Int, Ni::Int, Nj::Int)
