@@ -1,18 +1,3 @@
-function T_parity_conserving(T::AbstractArray)
-	s = size(T)
-	p = zeros(s)
-	bit = ceil(Int, log2(s[3]))
-	for index in CartesianIndices(T)
-		i = index.I .- 1
-		sum((sum(bitarray(i[3],bit)), sum(i[[1,2,4,5]]))) % 2 == 0 && (p[index] = 1)
-	end
-	p = _arraytype(T)(p)
-
-	return reshape(p.*T,s...)
-end
-
-ChainRulesCore.rrule(::typeof(T_parity_conserving),T::AbstractArray) = T_parity_conserving(T), dT -> (NoTangent(), T_parity_conserving(dT))
-
 function indextoqn(i::Int)
     i -= 1
     i == 0 && return 0
@@ -34,6 +19,24 @@ function indextoqn(i::Int)
 
     return sum(qni) % 2
 end
+
+function T_parity_conserving(T::AbstractArray)
+    s = size(T)
+	p = zeros(s)
+	for index in CartesianIndices(T)
+		i = index.I
+        if sum(indextoqn.(i)) % 2 == 0 
+            p[index] = 1
+        end
+        # i = index.I .- 1
+        # sum(map((i,s)->sum(bitarray(i, ceil(Int, log2(s)))), i,s)) % 2 == 0 && (p[index] = 1)
+	end
+	p = _arraytype(T)(p)
+
+	return p .* T
+end
+
+ChainRulesCore.rrule(::typeof(T_parity_conserving),T::AbstractArray) = T_parity_conserving(T), dT -> (NoTangent(), T_parity_conserving(dT))
 
 function swapgate(d::Int, D::Int)
 	S = ein"ij,kl->ikjl"(Matrix{ComplexF64}(I,d,d),Matrix{ComplexF64}(I,D,D))
@@ -60,7 +63,7 @@ end
 function bulid_M(A, params::iPEPSOptimize{:fermion, :square})
     Ni, Nj = size(A[1])
     D = size(A[1][1], 1)
-    SDD = _arraytype(A[1])(swapgate(D, D))
+    SDD = _arraytype(A[1][1])(swapgate(D, D))
     params.ifflatten == true || throw(Base.error("ifflatten must be true"))
     M = [reshape(ein"((abcde,fgchi),lfbm),dkji-> glhjkema"(A[1][i,j],A[2][i,j],SDD,SDD), D^2,D^2,D^2,D^2) for i in 1:Ni, j in 1:Nj]
     return M

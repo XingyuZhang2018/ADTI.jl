@@ -4,11 +4,11 @@ using CUDA
 using TeneT
 
 #####################################    parameters      ###################################
-Random.seed!(42)
+Random.seed!(100)
 atype = Array
 Ni, Nj = 1, 1
-d, D, χ = 4, 2, 20
-No = 0
+d, D, χ = 4, 3, 30
+No = 1
 model = Hubbard(1.0, 0.0, 0.0)
 system = :fermion
 lattice = :square
