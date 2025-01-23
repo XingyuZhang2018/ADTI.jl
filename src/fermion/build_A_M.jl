@@ -64,7 +64,7 @@ function bulid_M(A, params::iPEPSOptimize{:fermion, :square})
     Ni, Nj = size(A[1])
     D = size(A[1][1], 1)
     SDD = _arraytype(A[1][1])(swapgate(D, D))
-    params.ifflatten == true || throw(Base.error("ifflatten must be true"))
-    M = [reshape(ein"((abcde,fgchi),lfbm),dkji-> glhjkema"(A[1][i,j],A[2][i,j],SDD,SDD), D^2,D^2,D^2,D^2) for i in 1:Ni, j in 1:Nj]
+    params.ifflatten == true || throw(Base.error("ifflatten must be true for fermion currently"))
+    M = [ein"((abcde,fgchi),lfbm),dkji-> glhjkema"(A[1][i,j],A[2][i,j],SDD,SDD) for i in 1:Ni, j in 1:Nj]
     return M
 end

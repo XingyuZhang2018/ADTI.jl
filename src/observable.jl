@@ -12,7 +12,8 @@ function energy(A, model, rt, params::iPEPSOptimize)
     return energy_value(model, A, env, params)
 end
 
-function observable(A, model, χ, params::iPEPSOptimize)
+function observable(A, model, χ, params::iPEPSOptimize;
+                    restriction_ipeps = _restriction_ipeps)
     A = restriction_ipeps(A)
     A = bulid_A(A, params)
     M = bulid_M(A, params)

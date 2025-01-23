@@ -89,14 +89,7 @@ function init_ipeps_h5(;atype = Array, params, model, ϵ=0, ifWp=false, ifreal=f
     return atype(A)
 end
 
-function restriction_ipeps(A)
-    # Ar = Zygote.Buffer(A)
-    # Ni, Nj = size(A)[[6,7]]
-    # for j in 1:Nj, i in 1:Ni
-    #     Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,i,j] + permutedims(A[:,:,:,:,:,i,j], (2,1,3,5,4))
-    # end
-    # Ar = copy(Ar)
-    # return Ar/norm(Ar)
+function _restriction_ipeps(A)
     return A/norm(A)
 end
 

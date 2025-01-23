@@ -38,4 +38,20 @@ A = init_ipeps(;atype, model, params, No, D, χ, Ni, Nj)
 # A = ADIT.init_ipeps_h5(;atype, params, ifWp=false, ifreal=true, model, file="./data/kitsShf_sikh3nfr1D4D4.h5", D, Ni, Nj)
 ############################################################################################
 
-e, mag = observable(A, model, Dz, χ, params)
+function _restriction_ipeps(A)
+    Ar = Zygote.Buffer(A)
+    Ni, Nj = size(A)[[6,7]]
+    for j in 1:Nj, i in 1:Ni
+        # Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,i,j] + permutedims(A[:,:,:,:,:,i,j], (2,1,3,5,4))
+        if (i + j) % 2 == 0
+            Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,1,1]
+        else
+            Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,1,2]
+        end
+        # Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,i,j] + permutedims(A[:,:,:,:,:,i,j], (2,1,3,5,4))
+    end
+    Ar = copy(Ar)
+    return Ar/norm(Ar)
+end
+e, mag = observable(A, model, Dz, χ, params;
+                    restriction_ipeps = _restriction_ipeps)

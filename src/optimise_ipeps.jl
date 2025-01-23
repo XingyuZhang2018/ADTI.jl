@@ -1,15 +1,16 @@
 @kwdef mutable struct iPEPSOptimize{system, lattice}
-    boundary_alg::VUMPS
-    reuse_env::Bool = Defaults.reuse_env
-    verbosity::Int = Defaults.verbosity
-    maxiter::Int = Defaults.fpgrad_maxiter
-    tol::Real = Defaults.fpgrad_tol
-    optimizer = Defaults.optimizer
-    folder::String = Defaults.folder
-    show_every::Int = Defaults.show_every
-    save_every::Int = Defaults.save_every
-    ifflatten::Bool = true
-    ifcheckpoint::Bool = false
+    boundary_alg::VUMPS # boundary contraction algorithm
+    reuse_env::Bool = Defaults.reuse_env # reuse the environment of the previous iteration
+    verbosity::Int = Defaults.verbosity # verbosity level
+    maxiter::Int = Defaults.fpgrad_maxiter # maximum number of optimization iterations
+    tol::Real = Defaults.fpgrad_tol # tolerance for the optimization
+    optimizer = Defaults.optimizer # optimization algorithm
+    folder::String = Defaults.folder # folder to save the results
+    show_every::Int = Defaults.show_every # show the results every `show_every` iterations
+    save_every::Int = Defaults.save_every # save the results every `save_every` iterations
+    ifflatten::Bool = true # flatten the center tensors before the optimization
+    ifcheckpoint::Bool = false # use checkpointing
+    ifNN::Bool = false # include the nearest-neighbour terms in the Hamiltonian
 end
 
 
@@ -19,7 +20,8 @@ end
 Optimise the iPEPS tensor `A` for the `model` Hamiltonian with bond dimension `χ`
 using the parameters `params`. 
 """
-function optimise_ipeps(A::AbstractArray, model, χ::Int, params::iPEPSOptimize)
+function optimise_ipeps(A::AbstractArray, model, χ::Int, params::iPEPSOptimize;
+                        restriction_ipeps = _restriction_ipeps)
     D = size(A, 1)
     A′ = restriction_ipeps(A)
     A′ = bulid_A(A′, params)
