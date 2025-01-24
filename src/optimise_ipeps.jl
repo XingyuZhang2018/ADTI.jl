@@ -1,5 +1,6 @@
 @kwdef mutable struct iPEPSOptimize{system, lattice}
     boundary_alg::VUMPS # boundary contraction algorithm
+    sitetype = nothing # site type
     reuse_env::Bool = Defaults.reuse_env # reuse the environment of the previous iteration
     verbosity::Int = Defaults.verbosity # verbosity level
     maxiter::Int = Defaults.fpgrad_maxiter # maximum number of optimization iterations
@@ -12,7 +13,6 @@
     ifcheckpoint::Bool = false # use checkpointing
     ifNN::Bool = false # include the nearest-neighbour terms in the Hamiltonian
 end
-
 
 """
     optimise_ipeps(A::AbstractArray, model, χ::Int, params::iPEPSOptimize)

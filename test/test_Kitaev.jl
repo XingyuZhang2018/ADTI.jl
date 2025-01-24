@@ -37,7 +37,7 @@ params = iPEPSOptimize{system, lattice}(boundary_alg=boundary_alg,
                                         tol=1e-10,
                                         folder=folder
 )
-A = init_ipeps(;atype, model, params, No, D, χ, Ni, Nj)
+A = init_ipeps(;atype, params, No, D, χ, Ni, Nj)
 # A = ADIT.init_ipeps_spin111(;atype, model, params, No, ifWp=true, ϵ = 0, χ, Ni, Nj)
 # A = ADIT.init_ipeps_h5(;atype, params, ifWp=false, ifreal=true, model, file="./data/kitsShf_sikh3nfr1D8D8.h5", D, Ni, Nj)
 ############################################################################################

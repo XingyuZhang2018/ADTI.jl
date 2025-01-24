@@ -13,6 +13,7 @@ using Parameters
 using Zygote
 using TeneT
 using HDF5
+using U1ArrayKit
 
 using TeneT: _arraytype, update!, checkpoint, leg3, leg4, to_CuArray
 using TeneT: ALCtoAC

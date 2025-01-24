@@ -1,25 +1,3 @@
-function indextoqn(i::Int)
-    i -= 1
-    i == 0 && return 0
-
-    qni = []
-    while i > 0
-        remainder = i % 4
-        if remainder == 2
-            remainder = 1
-        elseif remainder == 3
-            remainder = 0
-        end
-        pushfirst!(qni, remainder)
-        i = div(i, 4)
-        # remainder = i % 2
-        # pushfirst!(qni, remainder)
-        # i = div(i, 2)
-    end
-
-    return sum(qni) % 2
-end
-
 function T_parity_conserving(T::AbstractArray)
     s = size(T)
 	p = zeros(s)
@@ -38,32 +16,92 @@ end
 
 ChainRulesCore.rrule(::typeof(T_parity_conserving),T::AbstractArray) = T_parity_conserving(T), dT -> (NoTangent(), T_parity_conserving(dT))
 
-function swapgate(d::Int, D::Int)
-	S = ein"ij,kl->ikjl"(Matrix{ComplexF64}(I,d,d),Matrix{ComplexF64}(I,D,D))
+function swapgate(sitetype, atype, dtype, d::Int, D::Int)
+	S = ein"ij,kl->ikjl"(Matrix{dtype}(I,d,d),Matrix{dtype}(I,D,D))
 	for j = 1:D, i = 1:d
-        if abs(indextoqn(i)) % 2 != 0 && abs(indextoqn(j)) % 2 != 0
-            S[i,j,i,j] = -1
-        end
+        abs(indextoqn(sitetype, i)) % 2 != 0 && abs(indextoqn(sitetype, j)) % 2 != 0 && (S[i,j,i,j] = -1)
 	end
-	return S
+	return atype(S)
 end
+@non_differentiable swapgate(kwarg...)
 
-@non_differentiable swapgate(d, D)
+function U1swapgate(atype, dtype, d::Int, D::Int; indqn::Vector{Vector{Int}}, indims::Vector{Vector{Int}}, ifZ2::Bool)
+    (d, D, d, D) != Tuple(map(sum, indims)) && throw(Base.error("U1swapgate indims is not valid"))
+    dir = [-1, -1, 1, 1]
+    qn = Vector{Vector{Int}}()
+    tensor = Vector{atype{dtype}}()
+    dims = Vector{Vector{Int}}()
+    @inbounds for i in CartesianIndices(Tuple(length.(indqn)))
+        qni = [indqn[j][i.I[j]] for j in 1:4]
+        qnsum = ifZ2 ? sum(qni) % 2 : sum(qni .* dir)
+        if qnsum == 0 && qni[1] == qni[3] && qni[2] == qni[4]
+            bulkdims = [indims[j][i.I[j]] for j in 1:4]
+            push!(qn, qni)
+            push!(dims, bulkdims)
+            tensori = atype(ein"ij,kl->ikjl"(Matrix{dtype}(I, bulkdims[1], bulkdims[1]), Matrix{dtype}(I,  bulkdims[2], bulkdims[2])))
+            isodd(qni[1]) && isodd(qni[2]) && (tensori .= -tensori)
+            push!(tensor, tensori)
+        end
+    end
+    p = sortperm(qn)
+    tensor = vcat(map(vec, tensor[p])...)
+    return U1Array(qn[p], dir, tensor, (d, D, d, D), dims[p], 1, ifZ2)
+end
+@non_differentiable U1swapgate(kwarg...)
 
 function fdag(ipeps, SDD) 
     return ein"(ulfdr,luij),pqrd->jifqp"(conj(ipeps), SDD, SDD)
 end
 
-function bulid_A(A, ::iPEPSOptimize{:fermion, :square})
+function bulid_A(A, params::iPEPSOptimize{:fermion, :square})
     D, Ni, Nj = size(A)[[1,6,7]]
-    SDD = _arraytype(A)(swapgate(D, D))
+    SDD = swapgate(params.sitetype, _arraytype(A), ComplexF64, D, D)
     return [T_parity_conserving(A[:,:,:,:,:,i,j]) for i in 1:Ni, j in 1:Nj], [fdag(T_parity_conserving(A[:,:,:,:,:,i,j]), SDD) for i in 1:Ni, j in 1:Nj]
 end
 
 function bulid_M(A, params::iPEPSOptimize{:fermion, :square})
     Ni, Nj = size(A[1])
     D = size(A[1][1], 1)
-    SDD = _arraytype(A[1][1])(swapgate(D, D))
+    SDD = swapgate(params.sitetype, _arraytype(A[1][1]), ComplexF64, D, D)
+    params.ifflatten == true || throw(Base.error("ifflatten must be true for fermion currently"))
+    M = [ein"((abcde,fgchi),lfbm),dkji-> glhjkema"(A[1][i,j],A[2][i,j],SDD,SDD) for i in 1:Ni, j in 1:Nj]
+    return M
+end
+
+function bulid_A(A::AbstractArray{ComplexF64, 3}, params::iPEPSOptimize{:fermion, :square})
+    qnD, _, dimsD, _ = params.boundary_alg.U1info
+    D = sum(dimsD)
+    atype = _arraytype(A)
+    Ni, Nj = size(A)[[2,3]]
+    d = 4
+    sitetype = params.sitetype
+    info = Zygote.@ignore zerosinitial(Val(:U1), Array, ComplexF64, D,D,d,D,D; 
+			dir = [-1,-1,1,1,1], 
+			indqn = [qnD, qnD, getqrange(sitetype, d)..., qnD, qnD], 
+			indims = [dimsD, dimsD, getblockdims(sitetype, d)..., dimsD, dimsD], 
+			f=[0],
+			ifZ2=sitetype.ifZ2
+    )
+    SDD = U1swapgate(atype, ComplexF64, D, D; 
+                     indqn = [qnD for _ in 1:4], 
+                     indims = [dimsD for _ in 1:4],
+                     ifZ2=sitetype.ifZ2
+    )
+    A = [U1Array(info.qn, info.dir, atype(A[:, i, j]), info.size, info.dims, 1, sitetype.ifZ2) for i = 1:Ni, j in 1:Nj]
+    Adag = [fdag(A, SDD) for A in A]
+    return A, Adag
+end
+
+function bulid_M(A::Tuple{Matrix{<:U1Array}, Matrix{<:U1Array}}, params::iPEPSOptimize{:fermion, :square})
+    Ni, Nj = size(A[1])
+    atype = _arraytype(A[1][1].tensor)
+    qnD, _, dimsD, _ = params.boundary_alg.U1info
+    D = sum(dimsD)
+    SDD = U1swapgate(atype, ComplexF64, D, D; 
+                     indqn = [qnD for _ in 1:4], 
+                     indims = [dimsD for _ in 1:4],
+                     ifZ2=params.sitetype.ifZ2
+    )
     params.ifflatten == true || throw(Base.error("ifflatten must be true for fermion currently"))
     M = [ein"((abcde,fgchi),lfbm),dkji-> glhjkema"(A[1][i,j],A[2][i,j],SDD,SDD) for i in 1:Ni, j in 1:Nj]
     return M

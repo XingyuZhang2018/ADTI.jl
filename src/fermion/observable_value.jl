@@ -1,12 +1,28 @@
 function energy_value(model, A, env, params::iPEPSOptimize{:fermion, :square})
     A, Adag = A
-    atype = _arraytype(A[1])
+    sitetype = params.sitetype
+    atype = _arraytype(A[1].tensor)
     Ni, Nj = size(A)
     D, d = size(A[1])[[2,3]]
-    SdD = atype(swapgate(d, D))
-    SDD = atype(swapgate(D, D))
-    h = atype(hamiltonian(model))
-
+    qnD, _, dimsD, _ = params.boundary_alg.U1info
+    h = atype{ComplexF64}(hamiltonian(model))
+    if params.sitetype === nothing
+        SdD = swapgate(sitetype, atype, ComplexF64, d, D)
+        SDD = swapgate(sitetype, atype, ComplexF64, D, D)
+    else
+        SdD = U1swapgate(atype, ComplexF64, d, D; 
+                         indqn = [getqrange(sitetype, d)..., qnD, getqrange(sitetype, d)..., qnD], 
+                         indims = [getblockdims(sitetype, d)..., dimsD, getblockdims(sitetype, d)..., dimsD],
+                         ifZ2=sitetype.ifZ2
+        )
+        SDD = U1swapgate(atype, ComplexF64, D, D; 
+                         indqn = [qnD for _ in 1:4], 
+                         indims = [dimsD for _ in 1:4],
+                         ifZ2=sitetype.ifZ2
+        )
+        h = Zygote.@ignore asSymmetryArray(h, Val(:U1), sitetype; dir = [-1,-1,1,1])
+    end
+    
     @unpack ACu, ARu, ACd, ARd, FLu, FRu, FLo, FRo = env
     # χ = size(ACu[1], 1)
     # ACu, ARu, ACd, ARd, FLu, FRu, FLo, FRo = map(x->map(y->reshape(y, χ,D,D,χ), x), [ACu, ARu, ACd, ARd, FLu, FRu, FLo, FRo])
@@ -20,7 +36,7 @@ function energy_value(model, A, env, params::iPEPSOptimize{:fermion, :square})
                          FLo[i,j],ACu[i,j],ARu[i,jr],FRo[i,jr],conj(ARd[ir,jr]),conj(ACd[ir,j])
         )
         e = sum(ein"ijkl,ijkl -> "(ρ,h))
-        n = sum(ein"ijij->"(ρ))
+        n = dtr(ρ)
         params.verbosity >= 4 && println("h_H = $(e/n)")
         etol += e/n
         
@@ -30,7 +46,7 @@ function energy_value(model, A, env, params::iPEPSOptimize{:fermion, :square})
                          ACu[i,j],FRu[i,j],FRo[ir,j],conj(ACd[irr,j]),FLo[ir,j],FLu[i,j]
         )
         e = sum(ein"ijkl,ijkl -> "(ρ,h))
-        n = sum(ein"ijij->"(ρ))
+        n = dtr(ρ)
         params.verbosity >= 4 && println("h_V = $(e/n)")
         etol += e/n
 
@@ -45,7 +61,7 @@ function energy_value(model, A, env, params::iPEPSOptimize{:fermion, :square})
                             ACu[i,j],ARu[i,jr],FLu[i,j],FLo[ir,j],FRu[i,jr],FRo[ir,jr],conj(ACd[irr,j]),conj(ARd[irr,jr])
             )
             e = sum(ein"ijkl,ijkl -> "(ρ,h))
-            n = sum(ein"ijij->"(ρ))
+            n = dtr(ρ)
             params.verbosity >= 4 && println("h_NN1 = $(e/n)")
             etol += e/n
 
@@ -56,7 +72,7 @@ function energy_value(model, A, env, params::iPEPSOptimize{:fermion, :square})
                             ACu[i,j],ARu[i,jr],FLu[i,j],FLo[ir,j],FRu[i,jr],FRo[ir,jr],conj(ACd[irr,j]),conj(ARd[irr,jr])
             )
             e = sum(ein"ijkl,ijkl -> "(ρ,h))
-            n = sum(ein"ijij->"(ρ))
+            n = dtr(ρ)
             params.verbosity >= 4 && println("h_NN2 = $(e/n)")
             etol += e/n
         end
