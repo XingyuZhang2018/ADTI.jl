@@ -1,6 +1,7 @@
-using ADIT
+using ADTI
+using ADTI: hamiltonian
 using Test
 
-@testset "ADIT.jl" begin
-    # Write your tests here.
+@testset "ADTI.jl" begin
+    include("test_hamiltonian_models.jl")
 end

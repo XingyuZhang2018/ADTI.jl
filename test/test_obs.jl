@@ -1,4 +1,4 @@
-using ADIT
+using ADTI
 using Random
 using CUDA
 using TeneT
@@ -35,7 +35,7 @@ params = iPEPSOptimize{method}(boundary_alg=boundary_alg,
                                folder=folder
 )
 A = init_ipeps(;atype, model, params, No, D, χ, Ni, Nj)
-# A = ADIT.init_ipeps_h5(;atype, params, ifWp=false, ifreal=true, model, file="./data/kitsShf_sikh3nfr1D4D4.h5", D, Ni, Nj)
+# A = ADTI.init_ipeps_h5(;atype, params, ifWp=false, ifreal=true, model, file="./data/kitsShf_sikh3nfr1D4D4.h5", D, Ni, Nj)
 ############################################################################################
 
 function _restriction_ipeps(A)

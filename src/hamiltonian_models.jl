@@ -87,3 +87,27 @@ function hamiltonian(model::Hubbard)
     return H
 end
 @non_differentiable hamiltonian(model)
+
+struct Free_Fermion <: HamiltonianModel
+    t::Real
+end
+Free_Fermion() = Hubbard(1.0, 0.0, 0.0)
+
+struct Topological_Insulator <: HamiltonianModel
+    t::Real
+    ϕ::Real
+end
+Topological_Insulator() = Topological_Insulator(1.0, 1/4)
+function hamiltonian(model::Topological_Insulator)
+    t = model.t
+    p = exp(1im * model.ϕ)
+    H = zeros(ComplexF64, 4,4,4,4)
+    
+    # t
+    H[1,2,2,1], H[1,4,2,3], H[2,1,1,2], H[2,3,1,4] = [p', p', p, p] * (-t)  #↑
+    H[1,3,3,1], H[2,3,4,1], H[3,1,1,3], H[4,1,2,3] = [p, p, p', p'] * (-t)  #↓
+    H[3,2,4,1], H[3,4,4,3], H[4,1,3,2], H[4,3,3,4] = [p', p', p, p] * t     #↑
+    H[1,4,3,2], H[2,4,4,2], H[3,2,1,4], H[4,2,2,4] = [p, p, p', p'] * t     #↓
+
+    return H
+end

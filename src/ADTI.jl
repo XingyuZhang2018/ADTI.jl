@@ -1,4 +1,4 @@
-module ADIT
+module ADTI
 using BitBasis
 using ChainRulesCore
 using FileIO
@@ -17,7 +17,7 @@ using HDF5
 using TeneT: _arraytype, update!, checkpoint, leg3, leg4, to_CuArray
 using TeneT: ALCtoAC
 
-export Kitaev, Hubbard
+export Kitaev, Hubbard, Free_Fermion, Topological_Insulator
 export observable
 export iPEPSOptimize, init_ipeps, optimise_ipeps, energy
 

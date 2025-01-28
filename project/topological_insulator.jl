@@ -1,17 +1,20 @@
 using ADTI
+using ADTI: swapgate
 using CUDA
 using LinearAlgebra
+using OMEinsum
 using Random
 using TeneT
 using Zygote
+
 
 #####################################    parameters      ###################################
 Random.seed!(100)
 atype = Array
 Ni, Nj = 2, 2
-d, D, χ = 4, 3, 40
-No = 160
-model = Hubbard(1.0, 12.0, 6.0)
+d, D, χ = 4, 2, 20
+No = 0
+model = Topological_Insulator()
 system = :fermion
 lattice = :square
 folder = "data/$model/$system/$lattice/$(Ni)x$(Nj)/"
@@ -32,7 +35,7 @@ params = iPEPSOptimize{system, lattice}(boundary_alg=boundary_alg,
                                         ifflatten=true,
                                         ifNN=false,
                                         verbosity=4, 
-                                        maxiter=0,
+                                        maxiter=1000,
                                         tol=1e-10,
                                         folder=folder
 )
@@ -45,13 +48,11 @@ function _restriction_ipeps(A)
     Ar = Zygote.Buffer(A)
     Ni, Nj = size(A)[[6,7]]
     for j in 1:Nj, i in 1:Ni
-        # Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,i,j] + permutedims(A[:,:,:,:,:,i,j], (2,1,3,5,4))
-        if (i + j) % 2 == 0
+        if (i+j) % 2 == 0
             Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,1,1]
         else
             Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,1,2]
         end
-        # Ar[:,:,:,:,:,i,j] = A[:,:,:,:,:,i,j] + permutedims(A[:,:,:,:,:,i,j], (2,1,3,5,4))
     end
     Ar = copy(Ar)
     return Ar/norm(Ar)
