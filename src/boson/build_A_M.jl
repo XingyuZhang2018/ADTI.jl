@@ -8,7 +8,7 @@ function bulid_A(A, ::iPEPSOptimize{:boson, :brickwall})
     return [((i+j) % 2 == 0 ? A[:,:,:,:,:,i,j] : permutedims(A[:,:,:,:,:,i,j], (3,4,1,2,5))) for i in 1:Ni, j in 1:Nj]
 end
 
-function bulid_M(A, params::iPEPSOptimize{:boson, :merge})
+function build_M(A, params::iPEPSOptimize{:boson, :merge})
     Ni, Nj = size(A)
     D = size(A[1], 1)
     if params.ifflatten
@@ -19,7 +19,7 @@ function bulid_M(A, params::iPEPSOptimize{:boson, :merge})
     end
 end
 
-function bulid_M(A, params::iPEPSOptimize{:boson, :brickwall})
+function build_M(A, params::iPEPSOptimize{:boson, :brickwall})
     Ni, Nj = size(A)
     D = size(A[1], 1)
     if params.ifflatten

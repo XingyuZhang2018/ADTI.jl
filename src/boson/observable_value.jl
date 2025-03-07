@@ -1,4 +1,4 @@
-function energy_value(model, A, env, params::iPEPSOptimize{:boson, :merge})
+function energy_value(model, A, M, env, params::iPEPSOptimize{:boson, :merge})
     @unpack ACu, ARu, ACd, ARd, FLu, FRu, FLo, FRo = env
     atype = _arraytype(ACu[1])
     S = model.S

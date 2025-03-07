@@ -6,14 +6,14 @@ using OMEinsum
 using Random
 using TeneT
 using Zygote
-
+using Optim
 
 #####################################    parameters      ###################################
 Random.seed!(100)
-atype = Array
+atype = CuArray
 Ni, Nj = 2, 2
-d, D, χ = 4, 2, 20
-No = 0
+d, D, χ = 4, 3, 30
+No = 12
 model = Topological_Insulator()
 system = :fermion
 lattice = :square
@@ -37,7 +37,8 @@ params = iPEPSOptimize{system, lattice}(boundary_alg=boundary_alg,
                                         verbosity=4, 
                                         maxiter=1000,
                                         tol=1e-10,
-                                        folder=folder
+                                        folder=folder,
+                                        optimizer = Adam(;alpha=0.0001),
 )
 A = init_ipeps(;atype, model, params, No, d, D, χ, Ni, Nj)
 # A = ADTI.init_ipeps_spin111(;atype, model, params, No, ifWp=true, ϵ = 0, χ, Ni, Nj)
