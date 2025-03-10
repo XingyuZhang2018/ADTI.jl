@@ -87,8 +87,8 @@ function hamiltonian(model::Hubbard)
     H = permutedims(H, (1,3,2,4))
     V = ℤ₂Space(0=>2, 1=>2)
     U, S, Vd = tsvd(TensorMap(H, V'*V, V*V'), trunc = truncbelow(1e-10))
-    h1 = U * sqrt(S)
-    h2 = sqrt(S) * Vd
+    h1 = U
+    h2 = S * Vd
     return h1, h2
 end
 
@@ -118,7 +118,7 @@ function hamiltonian(model::Topological_Insulator)
     H = permutedims(H, (1,3,2,4))
     V = ℤ₂Space(0=>2, 1=>2)
     U, S, Vd = tsvd(TensorMap(H, V'*V, V*V'), trunc = truncbelow(1e-10))
-    h1 = U * sqrt(S)
-    h2 = sqrt(S) * Vd
+    h1 = U
+    h2 = S * Vd
     return h1, h2
 end

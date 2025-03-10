@@ -8,6 +8,7 @@ using TeneT
 using TensorKit
 using OptimKit
 using OMEinsum
+using LinearAlgebra
 @testset "ADTI.jl" begin
 
 
@@ -28,7 +29,6 @@ using OMEinsum
             @test H_array ≈ H_array'
             U, S, Vd = tsvd(H, trunc = truncbelow(1e-10))
             @test dim(S) == 4*4+2*2
-            @show S
             A = U * sqrt(S)
             B = sqrt(S) * Vd
             @test H ≈ A * B 
@@ -93,7 +93,7 @@ using OMEinsum
         system = :fermion
         lattice = :square
         boundary_alg = VUMPS(verbosity=0, ifupdown=true, maxiter=10, ifdownfromup=true)
-        params = iPEPSOptimize{system, lattice}(boundary_alg=boundary_alg, verbosity=0)
+        params = iPEPSOptimize{system, lattice}(boundary_alg=boundary_alg, verbosity=0, ifNN=true)
         d = ℤ₂Space(0=>2, 1=>2)
         D = ℤ₂Space(0=>1, 1=>1)
         χ = ℤ₂Space(0=>10, 1=>10)
@@ -101,6 +101,7 @@ using OMEinsum
         model = Free_Fermion()
         M = build_M(A, params)
         rt = VUMPSRuntime(M, χ, params.boundary_alg)
+        # energy(A, model, rt, params)
         @test imag(energy(A, model, rt, params)) < 1e-7
     end
 

@@ -1,6 +1,7 @@
 @kwdef mutable struct iPEPSOptimize{system, lattice}
     boundary_alg::VUMPS # boundary contraction algorithm
     reuse_env::Bool = Defaults.reuse_env # reuse the environment of the previous iteration
+    λ::Real = 1e-3 # regularization parameter for not 0/0 energy
     verbosity::Int = Defaults.verbosity # verbosity level
     optimizer = Defaults.optimizer # optimization algorithm
     folder::String = Defaults.folder # folder to save the results
@@ -27,18 +28,24 @@ function optimise_ipeps(A::StructArray, model, χ::VectorSpace, params::iPEPSOpt
     end
     alg = params.optimizer
     t0 = time()
+    e_diff = [0.0, Inf]
     x, f, g, numfg, normgradhistory = optimize(fg, A, alg; 
                                                inner = _inner, 
-                                               finalize! = (x, f, g, iter)->_finalize!(x, f, g, iter, D, χ, params, t0)
+                                               finalize! = (x, f, g, iter)->_finalize!(x, f, g, iter, D, χ, params, t0, e_diff)
     )
     return x, f, g, numfg, normgradhistory
 end
 
 _inner(x, dx1, dx2) = real(dot(dx1, dx2))
-function _finalize!(x, f, g, iter, D, χ, params, t0)
+function _finalize!(x, f, g, iter, D, χ, params, t0, e_diff)
     @unpack folder = params
-    message = @sprintf("i = %5d\tt = %0.2f sec\tenergy = %.15f \tgnorm = %.3e\n", iter, time() - t0, f, norm(g))
+    message = @sprintf("i = %5d\tt = %0.2f sec\tenergy = %.15f \tgnorm = %.3e\tλ = %.3e\n", iter, time() - t0, f, norm(g), params.λ)
 
+    e_diff[2] = norm(e_diff[1] - f)
+    e_diff[1] = f
+    if e_diff[2] < 1e-4 &&  params.λ > 1e-5
+        params.λ /= 10
+    end
     folder = rejoinpath(folder, "D$(D)_χ$(χ)")
     !(ispath(folder)) && mkpath(folder)
     if params.verbosity >= 3 && iter % params.show_every == 0

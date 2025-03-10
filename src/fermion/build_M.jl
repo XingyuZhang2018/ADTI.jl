@@ -26,5 +26,8 @@ function build_M(A::StructArray, params::iPEPSOptimize{:fermion, :square})
         @tensoropt M[i,j][-1 -2; -3 -4] := A[i,j][1 2 3 4 5] * Adag[6 7 3 8 9] * SDD[2 13; 12 6] * SDD[9 10; 11 4] * 
         conj(It[-1; 7 12]) * It[-2; 8 10] * It[-3; 11 5] * conj(It[-4; 13 1])
     end
-    return copy(M)
+    M = copy(M)
+    # n = norm(M)
+    # return M/n, n
+    return M
 end

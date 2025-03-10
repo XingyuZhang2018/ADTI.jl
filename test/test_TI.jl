@@ -15,31 +15,31 @@ pattern = [1 2; 2 1]
 d = ℤ₂Space(0=>2, 1=>2)
 D = ℤ₂Space(0=>1, 1=>1)
 χ = ℤ₂Space(0=>10, 1=>10)
-No = 0
+No = 100
 λ = 0
-model = Hubbard(1.0, 12.0, 6.0)
+model = Topological_Insulator()
 system = :fermion
 lattice = :square
 folder = "data/$model/$system/$lattice/$pattern/"
 boundary_alg = VUMPS(ifupdown=true,
                      ifdownfromup=true, 
-                     ifsimple_eig=false,
+                     ifsimple_eig=true,
                      maxiter=30, 
                      miniter=1,
                      maxiter_ad=3,
                      miniter_ad=3,
                      ifcheckpoint=false,
-                     verbosity=2,
+                     verbosity=3,
                      show_every=10
 )
 params = iPEPSOptimize{system, lattice}(boundary_alg=boundary_alg,
-                                        optimizer=LBFGS(; gradtol=1e-10, maxiter=100),
+                                        optimizer=LBFGS(; gradtol=1e-10, maxiter=0),
                                         reuse_env=true, 
                                         ifcheckpoint=false, 
                                         ifflatten=true,
                                         ifNN=false,
-                                        verbosity=4, 
                                         λ=λ,
+                                        verbosity=4, 
                                         folder=folder
 )
 A = init_ipeps(;atype, params, No, d, D, χ, pattern)
