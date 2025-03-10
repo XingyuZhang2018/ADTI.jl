@@ -15,7 +15,7 @@ using TeneT
 using HDF5
 
 using TeneT: _arraytype, update!, checkpoint, leg3, leg4, to_CuArray
-using TeneT: ALCtoAC
+using TeneT: ALCtoAC, FLmap, ACmap
 
 export Kitaev, Hubbard, Free_Fermion, Topological_Insulator
 export observable

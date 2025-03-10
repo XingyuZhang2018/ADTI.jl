@@ -17,6 +17,9 @@ function generate_horizontal_rules(;d=4,D=2,χ=20)
 
     (31,14,20,32),#swapgate(nl,nu)
 
+	(21,23,41), #H1
+	(41,24,25), #H2
+
     (39,7,29,38), #E1 FLo
     (39,30,1,34), #E2 ACu
     (34,33,11,35), #E3 ARu
@@ -24,13 +27,13 @@ function generate_horizontal_rules(;d=4,D=2,χ=20)
     (37,19,32,36), #E5 ARd
     (38,9,40,37), #E6 ACd
 	),
-	(21,24,23,25) #hamiltonian (ij di dj)
+	() #hamiltonian (ij di dj)
 	)
 
-    size_dict = [D for i = 1:40]
+    size_dict = [D for i = 1:41]
 	size_dict[[3;8;13;18;21;23;24;25]] .= d
 	size_dict[34:39] .= χ
-	sd = Dict(i=>size_dict[i] for i = 1:40)
+	sd = Dict(i=>size_dict[i] for i = 1:41)
 	
 	# for seed = 1:100
 	seed = 100
@@ -60,6 +63,9 @@ function generate_vertical_rules(;d=4,D=2,χ=20)
 	(32,33,25,31),#swapgate(nf,nr)
 	(23,34,9,33), #swapgate(nl,nu)
 
+	(15,14,41), #H1
+	(41,30,32), #H2
+
 	(35,12,1,36), # ACu: E3
 	(36,18,5,37), # FRu: E8
 	(37,29,22,38), # FRo: E4
@@ -67,13 +73,13 @@ function generate_vertical_rules(;d=4,D=2,χ=20)
 	(40,24,34,39), # FLo: E1
 	(35,7,11,40) # FLu: E7
 	),
-	(15,30,14,32) #hamiltonian (ij di dj)
+	() #hamiltonian (ij di dj)
 	)
 		
-	size_dict = [D for i = 1:40]
+	size_dict = [D for i = 1:41]
 	size_dict[[3;8;14;15;30;32;20;25]] .= d
 	size_dict[35:40] .= χ
-	sd = Dict(i=>size_dict[i] for i = 1:40)
+	sd = Dict(i=>size_dict[i] for i = 1:41)
 
 	# for seed =40:100
 	seed = 100
@@ -151,6 +157,9 @@ function generate_next_neighbor1_rules(;d=4,D=2,χ=20)
 	(60,61,62,50),#SDD
 	(57,56,59,58,60),#T22'
 
+	(31,30,71), #H1
+	(71,32,33), #H2
+
 	(63,2,4,64),#ACu
 	(64,6,8,65),#ARu
 	(63,16,1,70),#FLu
@@ -160,13 +169,13 @@ function generate_next_neighbor1_rules(;d=4,D=2,χ=20)
 	(69,52,55,68),#ACd
 	(68,58,61,67),#ARd
 	),
-	(31,32,30,33) #hamiltonian (ij di dj)
+	() #hamiltonian (ij di dj)
 	)
 		
-	size_dict = [D for _ = 1:70]
+	size_dict = [D for _ = 1:71]
 	size_dict[[11;24;31;17;20;30;49;37;32;59;47;33]] .= d
 	size_dict[63:70] .= χ
-	sd = Dict(i=>size_dict[i] for i = 1:70)
+	sd = Dict(i=>size_dict[i] for i = 1:71)
 
 	# for seed =40:100
 	seed = 100
@@ -214,6 +223,9 @@ function generate_next_neighbor2_rules(;d=4,D=2,χ=20)
 	(23,47,24,46),#SDD
 	(41,22,53,42,23),#T22'
 
+	(54,56,71), #H1
+	(71,55,57), #H2
+
 	(63,25,30,64),#ACu
 	(64,36,43,65),#ARu
 	(63,6,1,70),#FLu
@@ -223,13 +235,13 @@ function generate_next_neighbor2_rules(;d=4,D=2,χ=20)
 	(69,29,35,68),#ACd
 	(68,42,47,67),#ARd
 	),
-	(54,55,56,57) #hamiltonian (ij di dj)
+	() #hamiltonian (ij di dj)
 	)
 
-	size_dict = [D for _ = 1:70]
+	size_dict = [D for _ = 1:71]
 	size_dict[[54;60;51;55;58;49;56;61;52;57;59;50]] .= d
 	size_dict[63:70] .= χ
-	sd = Dict(i=>size_dict[i] for i = 1:70)
+	sd = Dict(i=>size_dict[i] for i = 1:71)
 
 	# for seed =40:100
 	seed = 100
@@ -243,3 +255,41 @@ function generate_next_neighbor2_rules(;d=4,D=2,χ=20)
 	return optcode
 end
 oc_NN2_fermion = generate_next_neighbor2_rules()
+
+function generate_next_neighbor_n_rules(;d=4,D=2,χ=20)
+	eincode = EinCode((
+	(1,9,8,14),#FLu
+	(1,2,3,4),#ACu
+	(9,8,15,16,11,10,2,3),#M11
+	
+	(4,5,6,7),#ARu
+	(7,13,12,19),#FRu
+	(11,10,17,18,13,12,5,6),#M12
+
+	(14,21,20,26),#FLo
+	(26,27,28,29),#ACd
+	(21,20,27,28,23,22,15,16),#M21
+
+	(29,30,31,32),#ARd
+	(19,25,24,32),#FRo
+	(23,22,30,31,25,24,17,18),#M22
+	),
+	() #hamiltonian (ij di dj)
+	)
+
+	size_dict = [D for _ = 1:32]
+	size_dict[[1,4,7,14,19,26,29,32]] .= χ
+	sd = Dict(i=>size_dict[i] for i = 1:32)
+
+	# for seed =40:100
+	seed = 100
+	Random.seed!(seed)
+	optcode = optimize_code(eincode, sd, TreeSA())
+
+
+	print("NN_n Contraction Complexity(seed=$(seed))",OMEinsum.timespace_complexity(optcode,sd),"\n") 
+	# You would better try some times to make it optimal (By the for-end iteration...)
+	# end
+	return optcode
+end
+oc_NN_n_fermion = generate_next_neighbor_n_rules()

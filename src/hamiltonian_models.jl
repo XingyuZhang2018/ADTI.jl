@@ -109,5 +109,10 @@ function hamiltonian(model::Topological_Insulator)
     H[3,2,4,1], H[3,4,4,3], H[4,1,3,2], H[4,3,3,4] = [p', p', p, p] * t     #↑
     H[1,4,3,2], H[2,4,4,2], H[3,2,1,4], H[4,2,2,4] = [p, p, p', p'] * t     #↓
 
-    return H
+    H = permutedims(H, (1,3,2,4))
+    U, S, V = svd(reshape(H, 16,16))
+    truc = sum(S .> 1e-10)
+    H1 = reshape(U[:,1:truc] * Diagonal(S[1:truc]), 4,4,truc)
+    H2 = reshape(V[:,1:truc]', truc,4,4)
+    return H1, H2
 end

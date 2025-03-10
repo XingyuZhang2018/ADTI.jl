@@ -9,7 +9,7 @@ function energy(A, model, rt, params::iPEPSOptimize)
     rt′ = leading_boundary(rt, M, params.boundary_alg)
     Zygote.@ignore params.reuse_env && update!(rt, rt′)
     env = VUMPSEnv(rt′, M, params.boundary_alg)
-    return energy_value(model, A, env, params)
+    return energy_value(model, A, M, env, params)
 end
 
 function observable(A, model, χ, params::iPEPSOptimize;
