@@ -1,3 +1,16 @@
+function overlap_value(env, params::iPEPSOptimize{:fermion, :square})
+    @unpack ARu, ARd = env
+
+    _, L = TeneT.leftCenv(ARu, ARd'; ifobs=true, alg=params.boundary_alg)
+    _, R = TeneT.rightCenv(ARu, ARd'; ifobs=true, alg=params.boundary_alg)
+    # L,R = L[1], R[1]
+    # @show @tensor n1 = L[1][4; 1] * ARu[1][1 2; 3] * conj(ARd[1][4 2; 5]) * R[1][3; 5] 
+    overlap = abs2((@tensor n1 = L[1][4; 1] * ARu[1][1 2; 3] * conj(ARd[1][4 2; 5]) * R[1][3; 5]) / (@tensor n2 = L[1][1; 2] * R[1][2; 1]))
+
+    params.verbosity >= 3 && println("overlap = $(overlap)")
+    return overlap
+end
+
 function energy_value(model, A, M, env, params::iPEPSOptimize{:fermion, :square})
     atype = _arraytype(A[1])
     Ni, Nj = size(A)
@@ -16,31 +29,33 @@ function energy_value(model, A, M, env, params::iPEPSOptimize{:fermion, :square}
     etol = 0
     loss = 0
     λ = params.λ
-    ϵ = 0
     for p in 1:len
         i, j = Tuple(findfirst(==(p), A.pattern))
         params.verbosity >= 4 && println("===========$i,$j===========")
         ir = Ni + 1 - i
         jr = mod1(j + 1, Nj)
-        e = horizontal_contraction(h1, h2, A[i,j],fdag(A[i,j], SDD),A[i,jr],fdag(A[i,jr], SDD),SdD,SDD,
+        eh = horizontal_contraction(h1, h2, A[i,j],fdag(A[i,j], SDD),A[i,jr],fdag(A[i,jr], SDD),SdD,SDD,
                                     f1(FLo[i,j]),f1(ACu[i,j]),f1(ARu[i,jr]),f2(FRo[i,jr]),f1(ARd[ir,jr])',f1(ACd[ir,j])'
                                     )
-        n = @tensor FLmap(FLmap(FLo[i,j], ACu[i,j], ACd[ir,j]', M[i,j]), ARu[i,jr], ARd[ir,jr]', M[i,jr])[1 2; 3] * FRo[i,jr][3 2; 1]
-        params.verbosity >= 4 && println("h_H = $(e/n)")
-        norm(n) < 1e-5 && @warn "n = $n"
-        etol += e/n
-        loss += e/(n + ϵ) + λ * 1/norm(n)
+        nh = @tensor FLmap(FLmap(FLo[i,j], ACu[i,j], ACd[ir,j]', M[i,j]), ARu[i,jr], ARd[ir,jr]', M[i,jr])[1 2; 3] * FRo[i,jr][3 2; 1]
+        params.verbosity >= 4 && println("h_H = $(eh/nh)")
+        println("h_n = $(norm(nh))")
+        norm(nh) < 1e-5 && @warn "nh = $nh"
+        etol += eh/nh
+        loss += eh/nh
 
         ir  = mod1(i + 1, Ni)
         irr = mod1(Ni - i, Ni) 
-        e = vertical_contraction(h1, h2, A[i,j],fdag(A[i,j], SDD),A[ir,j],fdag(A[ir,j], SDD),SdD,SDD,
+        ev = vertical_contraction(h1, h2, A[i,j],fdag(A[i,j], SDD),A[ir,j],fdag(A[ir,j], SDD),SdD,SDD,
                                   f1(ACu[i,j]),f2(FRu[i,j]),f2(FRo[ir,j]),f1(ACd[irr,j])',f1(FLo[ir,j]),f1(FLu[i,j])
                                  )
-        n = @tensor ACmap(ACmap(ACu[i,j], FLu[i,j], FRu[i,j], M[i,j]), FLo[ir,j], FRo[ir,j], M[ir,j])[1 2; 3] * ACd[irr,j]'[3; 1 2]
-        params.verbosity >= 4 && println("h_V = $(e/n)")
-        norm(n) < 1e-5 && @warn "n = $n"
-        etol += e/n
-        loss += e/(n + ϵ) + λ * 1/norm(n)
+        nv = @tensor ACmap(ACmap(ACu[i,j], FLu[i,j], FRu[i,j], M[i,j]), FLo[ir,j], FRo[ir,j], M[ir,j])[1 2; 3] * ACd[irr,j]'[3; 1 2]
+        params.verbosity >= 4 && println("h_V = $(ev/nv)")
+        println("v_n = $(norm(nv))")
+        norm(nv) < 1e-5 && @warn "nv = $nv"
+        etol += ev/nv
+        loss += ev/nv
+        loss += (abs(ev/nv - eh/nh) + 1e6 * abs(imag(ev/nv)) + 1e6 * abs(imag(eh/nh))) * λ 
 
         if params.ifNN
             ir  = mod1(i + 1,  Ni)
@@ -55,8 +70,14 @@ function energy_value(model, A, M, env, params::iPEPSOptimize{:fermion, :square}
         end
     end
 
+    # _, L = TeneT.leftCenv(ARu, ARd'; ifobs=true, alg=params.boundary_alg)
+    # _, R = TeneT.rightCenv(ARu, ARd'; ifobs=true, alg=params.boundary_alg)
+    # L,R = L[1], R[1]
+    # @show @tensor n1 = L[1][4; 1] * ARu[1][1 2; 3] * conj(ARd[1][4 2; 5]) * R[1][3; 5] 
+    # overlap = abs2((@tensor n1 = L[1][4; 1] * ARu[1][1 2; 3] * conj(ARd[1][4 2; 5]) * R[1][3; 5]) / (@tensor n2 = L[1][1; 2] * R[1][2; 1]))
+    # loss += λ * abs(1 - overlap) 
     params.verbosity >= 3 && println("energy = $(etol/len)")
-    return loss/len
+    return etol/len
 end
 
 function energy_value(model::Topological_Insulator, A, M, env, params::iPEPSOptimize{:fermion, :square})
@@ -102,7 +123,9 @@ function energy_value(model::Topological_Insulator, A, M, env, params::iPEPSOpti
                                     )
         n = @tensor FLmap(FLmap(FLo[i,j], ACu[i,j], ACd[ir,j]', M[i,j]), ARu[i,jr], ARd[ir,jr]', M[i,jr])[1 2; 3] * FRo[i,jr][3 2; 1]
         params.verbosity >= 4 && println("h_H = $(e/n)")
+        println("h_n = $n")
         norm(n) < 1e-5 && @warn "n = $n"
+        
         etol += e/n
         loss += e/n + λ * 1/norm(n)
 
@@ -113,6 +136,7 @@ function energy_value(model::Topological_Insulator, A, M, env, params::iPEPSOpti
                                  )
         n = @tensor ACmap(ACmap(ACu[i,j], FLu[i,j], FRu[i,j], M[i,j]), FLo[ir,j], FRo[ir,j], M[ir,j])[1 2; 3] * ACd[irr,j]'[3; 1 2]
         params.verbosity >= 4 && println("h_V = $(e/n)")
+        println("h_v = $n")
         norm(n) < 1e-5 && @warn "n = $n"
         etol += e/n
         loss += e/n + λ * 1/norm(n)

@@ -17,6 +17,7 @@ using JLD2
 
 using TeneT: _arraytype, update!, checkpoint, leg3, leg4, to_CuArray
 using TeneT: ALCtoAC, FLmap, ACmap
+using TeneT: _fit_spaces
 
 export Kitaev, Hubbard, Free_Fermion, Topological_Insulator
 export observable
