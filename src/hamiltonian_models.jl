@@ -84,7 +84,12 @@ function hamiltonian(model::Hubbard)
     H[4,3,4,3] += -3*μ/4
     H[4,4,4,4] += -μ
 
-    return H
+    H = permutedims(H, (1,3,2,4))
+    U, S, V = svd(reshape(H, 16,16))
+    truc = sum(S .> 1e-10)
+    H1 = reshape(U[:,1:truc] * Diagonal(S[1:truc]), 4,4,truc)
+    H2 = reshape(V[:,1:truc]', truc,4,4)
+    return H1, H2
 end
 @non_differentiable hamiltonian(model)
 

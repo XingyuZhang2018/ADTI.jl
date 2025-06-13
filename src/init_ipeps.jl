@@ -3,22 +3,24 @@
 
 return a random `ipeps` with bond dimension `D` and physical dimension 2.
 """
-function init_ipeps(;atype = Array, model, params::iPEPSOptimize{S,L}, No::Int=0, d::Int, D::Int, χ::Int, Ni::Int, Nj::Int) where {S,L}
+function init_ipeps(;atype = Array, params::iPEPSOptimize{S,L}, No::Int=0, d::Int, D::Int, χ::Int) where {S,L}
     if No != 0
         file = joinpath(params.folder, "D$(D)_χ$(χ)/ipeps/ipeps_No.$(No).jld2")
         @info "load ipeps from file: $file"
         A = load(file, "bcipeps")
     else
+        N = length(unique(params.pattern))
+        Ni, Nj = size(params.pattern)
         @info "generate random $S $L ipeps"
         if S == :boson
             if L == :merge
-                A = rand(ComplexF64, D,D,D,D,d^2, Ni,Nj) .- 0.5
+                A = rand(ComplexF64, D,D,D,D,d^2, N) .- 0.5
             elseif L == :brickwall
                 Ni % 2 == 0 && Nj % 2 == 0 || throw(ArgumentError("Ni and Nj should be even"))
-                A = rand(ComplexF64, D,1,D,D,d, Ni,Nj) .- 0.5
+                A = rand(ComplexF64, D,1,D,D,d, N) .- 0.5
             end
         elseif S == :fermion
-            A = rand(ComplexF64, D,D,d,D,D, Ni,Nj) .- 0.5
+            A = rand(ComplexF64, D,D,d,D,D, N) .- 0.5
         end
         A /= norm(A)
     end
@@ -43,8 +45,8 @@ function init_ipeps_spin111(;atype = Array, model, params::iPEPSOptimize{F}, No:
         A /= norm(A)
     end
     if ifWp
-        Wp = _arraytype(A)(bulid_Wp(model.S, params))
-        A = bulid_A(A + randn(ComplexF64, size(A)) * ϵ, Wp, params) 
+        Wp = _arraytype(A)(build_Wp(model.S, params))
+        A = build_A(A + randn(ComplexF64, size(A)) * ϵ, Wp, params) 
     end
     return atype(A)
 end
@@ -83,8 +85,8 @@ function init_ipeps_h5(;atype = Array, params, model, ϵ=0, ifWp=false, ifreal=f
         end
     end
     if ifWp
-        Wp = _arraytype(A)(bulid_Wp(model.S, params))
-        A = bulid_A(A + randn(ComplexF64, size(A)) * ϵ, Wp, params) 
+        Wp = _arraytype(A)(build_Wp(model.S, params))
+        A = build_A(A + randn(ComplexF64, size(A)) * ϵ, Wp, params) 
     end
     return atype(A)
 end

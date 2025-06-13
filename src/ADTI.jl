@@ -6,7 +6,7 @@ using KrylovKit
 using LinearAlgebra
 using LineSearches
 using Random
-using Optim
+using OptimKit
 using OMEinsum
 using Printf
 using Parameters
@@ -25,6 +25,7 @@ include("defaults.jl")
 include("hamiltonian_models.jl")
 include("optimise_ipeps.jl")
 include("init_ipeps.jl")
+include("init_env.jl")
 include("boson/build_A_M.jl")
 include("boson/contraction.jl")
 include("boson/observable_value.jl")

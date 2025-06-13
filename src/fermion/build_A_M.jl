@@ -54,19 +54,20 @@ function fdag(ipeps, SDD)
     return ein"(ulfdr,luij),pqrd->jifqp"(conj(ipeps), SDD, SDD)
 end
 
-function bulid_A(A, ::iPEPSOptimize{:fermion, :square})
-    D, Ni, Nj = size(A)[[1,6,7]]
+function build_A(A, params::iPEPSOptimize{:fermion, :square})
+    D, N = size(A)[[1,6]]
     SDD = _arraytype(A)(swapgate(D, D))
-    return [T_parity_conserving(A[:,:,:,:,:,i,j]) for i in 1:Ni, j in 1:Nj], [fdag(T_parity_conserving(A[:,:,:,:,:,i,j]), SDD) for i in 1:Ni, j in 1:Nj]
+    return StructArray([T_parity_conserving(A[:,:,:,:,:,i]) for i in 1:N], params.pattern),
+           StructArray([fdag(T_parity_conserving(A[:,:,:,:,:,i]), SDD) for i in 1:N], params.pattern)
 end
 
 using TeneT: mcform
-function bulid_M(A, params::iPEPSOptimize{:fermion, :square})
-    Ni, Nj = size(A[1])
+function build_M(A, params::iPEPSOptimize{:fermion, :square})
+    N = length(A[1])
     D = size(A[1][1], 1)
     SDD = _arraytype(A[1][1])(swapgate(D, D))
     params.ifflatten == true || throw(Base.error("ifflatten must be true for fermion currently"))
-    M = StructArray([ein"((abcde,fgchi),lfbm),dkji-> glhjkema"(A[1][i],A[2][i],SDD,SDD) for i in 1:Ni], [1 2; 2 1])
+    M = StructArray([ein"((abcde,fgchi),lfbm),dkji-> glhjkema"(A[1][i],A[2][i],SDD,SDD) for i in 1:N], params.pattern)
     # Mr = reshape(M[1], D^2,D^2,D^2,D^2)
     # @show norm(M[1] - ein"(glhjkema,glbc),kedf->bcmafdhj"(conj(M[1]),SDD,SDD))
     # M = [reshape(mcform(reshape(M,D^2,D^2,D^2,D^2))[3],D,D,D,D,D,D,D,D) for M in M]
