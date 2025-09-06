@@ -67,40 +67,54 @@ function energy_value(model::Topological_Insulator, A, M, env, params::iPEPSOpti
         params.verbosity >= 4 && println("===========$i,$j===========")
         ir = Ni + 1 - i
         jr = mod1(j + 1, Nj)
-        e = sum(oc_H_fermion(A[i,j],SdD,Adag[i,j],SdD,SDD,SDD,Adag[i,jr],SdD,SdD,SDD,A[i,jr],SDD,hh[1],hh[2],
+        e = params.ifcheckpoint ? sum(checkpoint(oc_H_fermion, A[i,j],SdD,Adag[i,j],SdD,SDD,SDD,Adag[i,jr],SdD,SdD,SDD,A[i,jr],SDD,hh[1],hh[2],
                          FLo[i,j],ACu[i,j],ARu[i,jr],FRo[i,jr],conj(ARd[ir,jr]),conj(ACd[ir,j])
+        )) : sum(oc_H_fermion(A[i,j],SdD,Adag[i,j],SdD,SDD,SDD,Adag[i,jr],SdD,SdD,SDD,A[i,jr],SDD,hh[1],hh[2],
+        FLo[i,j],ACu[i,j],ARu[i,jr],FRo[i,jr],conj(ARd[ir,jr]),conj(ACd[ir,j])
         ))
-        n = sum(ein"abcd,abcd->"(FLmap(FLmap(FLo[i,j], ACu[i,j], conj(ACd[ir,j]), M[i,j]), ARu[i,jr], conj(ARd[ir,jr]), M[i,jr]), FRo[i,jr]))
+        n = params.ifcheckpoint ? sum(checkpoint(ein"abcd,abcd->", FLmap(FLmap(FLo[i,j], ACu[i,j], conj(ACd[ir,j]), M[i,j]), ARu[i,jr], conj(ARd[ir,jr]), M[i,jr]), FRo[i,jr])) : sum(ein"abcd,abcd->"(FLmap(FLmap(FLo[i,j], ACu[i,j], conj(ACd[ir,j]), M[i,j]), ARu[i,jr], conj(ARd[ir,jr]), M[i,jr]), FRo[i,jr]))
         params.verbosity >= 4 && println("h_H = $(e/n)")
         etol += e/n
         
         ir  = mod1(i + 1, Ni)
         irr = mod1(Ni - i, Ni) 
-        e = sum(oc_V_fermion(A[i,j],Adag[i,j],SDD,SdD,SdD,SDD,A[ir,j],Adag[ir,j],SDD,SdD,SdD,SDD,hv[1],hv[2],
+        e = params.ifcheckpoint ? sum(checkpoint(oc_V_fermion, A[i,j],Adag[i,j],SDD,SdD,SdD,SDD,A[ir,j],Adag[ir,j],SDD,SdD,SdD,SDD,hv[1],hv[2],
                          ACu[i,j],FRu[i,j],FRo[ir,j],conj(ACd[irr,j]),FLo[ir,j],FLu[i,j]
+        )) : sum(oc_V_fermion(A[i,j],Adag[i,j],SDD,SdD,SdD,SDD,A[ir,j],Adag[ir,j],SDD,SdD,SdD,SDD,hv[1],hv[2],
+        ACu[i,j],FRu[i,j],FRo[ir,j],conj(ACd[irr,j]),FLo[ir,j],FLu[i,j]
         ))
-        n = sum(ein"abcd,abcd->"(ACmap(ACmap(ACu[i,j], FLu[i,j], FRu[i,j], M[i,j]), FLo[ir,j], FRo[ir,j], M[ir,j]), conj(ACd[irr,j])))
+        n = params.ifcheckpoint ? sum(checkpoint(ein"abcd,abcd->", ACmap(ACmap(ACu[i,j], FLu[i,j], FRu[i,j], M[i,j]), FLo[ir,j], FRo[ir,j], M[ir,j]), conj(ACd[irr,j]))) : sum(ein"abcd,abcd->"(ACmap(ACmap(ACu[i,j], FLu[i,j], FRu[i,j], M[i,j]), FLo[ir,j], FRo[ir,j], M[ir,j]), conj(ACd[irr,j])))
         params.verbosity >= 4 && println("h_V = $(e/n)")
         etol += e/n
 
         ir  = mod1(i + 1, Ni)
         irr = mod1(Ni - i, Ni) 
         jr = mod1(j + 1, Nj)
-        e = sum(oc_NN1_fermion(SDD,A[i,j],SdD,SdD,SDD,SdD,SdD,Adag[i,j],
+        e = params.ifcheckpoint ? sum(checkpoint(oc_NN1_fermion, SDD,A[i,j],SdD,SdD,SDD,SdD,SdD,Adag[i,j],
                         SDD,A[i,jr],SDD,Adag[i,jr],
                         SDD,A[ir,j],SDD,Adag[ir,j],
                         SdD,SdD,SDD,SdD,SdD,A[ir,jr],SDD,Adag[ir,jr],hNN[1],hNN[2],
                         ACu[i,j],ARu[i,jr],FLu[i,j],FLo[ir,j],FRu[i,jr],FRo[ir,jr],conj(ACd[irr,j]),conj(ARd[irr,jr])
+        )) : sum(oc_NN1_fermion(SDD,A[i,j],SdD,SdD,SDD,SdD,SdD,Adag[i,j],
+        SDD,A[i,jr],SDD,Adag[i,jr],
+        SDD,A[ir,j],SDD,Adag[ir,j],
+        SdD,SdD,SDD,SdD,SdD,A[ir,jr],SDD,Adag[ir,jr],hNN[1],hNN[2],
+        ACu[i,j],ARu[i,jr],FLu[i,j],FLo[ir,j],FRu[i,jr],FRo[ir,jr],conj(ACd[irr,j]),conj(ARd[irr,jr])
         ))
-        n = sum(oc_NN_n_fermion(FLu[i,j],ACu[i,j],M[i,j],ARu[i,jr],FRu[i,jr],M[i,jr],FLo[ir,j],conj(ACd[irr,j]),M[ir,j],conj(ARd[irr,jr]),FRo[ir,jr],M[ir,jr]))
+        n = params.ifcheckpoint ? sum(checkpoint(oc_NN_n_fermion, FLu[i,j],ACu[i,j],M[i,j],ARu[i,jr],FRu[i,jr],M[i,jr],FLo[ir,j],conj(ACd[irr,j]),M[ir,j],conj(ARd[irr,jr]),FRo[ir,jr],M[ir,jr])) : sum(oc_NN_n_fermion(FLu[i,j],ACu[i,j],M[i,j],ARu[i,jr],FRu[i,jr],M[i,jr],FLo[ir,j],conj(ACd[irr,j]),M[ir,j],conj(ARd[irr,jr]),FRo[ir,jr],M[ir,jr]))
         params.verbosity >= 4 && println("h_NN1 = $(e/n)")
         etol += e/n
 
-        e = sum(oc_NN2_fermion(SDD,A[i,j],SDD,Adag[i,j],
+        e = params.ifcheckpoint ? sum(checkpoint(oc_NN2_fermion, SDD,A[i,j],SDD,Adag[i,j],
                         SDD,A[i,jr],SDD,Adag[i,jr],SdD,SdD,SdD,SdD,
                         SDD,A[ir,j],SdD,SdD,SdD,SdD,SDD,Adag[ir,j],
                         SDD,A[ir,jr],SDD,Adag[ir,jr],hNN[1],hNN[2],
                         ACu[i,j],ARu[i,jr],FLu[i,j],FLo[ir,j],FRu[i,jr],FRo[ir,jr],conj(ACd[irr,j]),conj(ARd[irr,jr])
+        )) : sum(oc_NN2_fermion(SDD,A[i,j],SDD,Adag[i,j],
+        SDD,A[i,jr],SDD,Adag[i,jr],SdD,SdD,SdD,SdD,
+        SDD,A[ir,j],SdD,SdD,SdD,SdD,SDD,Adag[ir,j],
+        SDD,A[ir,jr],SDD,Adag[ir,jr],hNN[1],hNN[2],
+        ACu[i,j],ARu[i,jr],FLu[i,j],FLo[ir,j],FRu[i,jr],FRo[ir,jr],conj(ACd[irr,j]),conj(ARd[irr,jr])
         ))
         params.verbosity >= 4 && println("h_NN2 = $(e/n)")
         etol += e/n

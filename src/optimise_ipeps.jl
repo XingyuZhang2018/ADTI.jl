@@ -38,7 +38,7 @@ function optimise_ipeps(A::AbstractArray, model, χ::Int, params::iPEPSOptimize;
 
     function f(A) 
         A = restriction_ipeps(A)
-        return params.ifcheckpoint ? real(checkpoint(energy, A, model, rt, rt′, params)) : real(energy(A, model, rt, rt′, params))
+        return real(energy(A, model, rt, rt′, params))
     end
     function fg(x)
         # return f(x), gradient(f, x)[1]
